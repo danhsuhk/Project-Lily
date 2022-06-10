@@ -1,0 +1,133 @@
+
+DROP DATABASE IF EXISTS HDTherapist;
+CREATE DATABASE HDTherapist;
+
+USE HDTherapist;
+
+CREATE TABLE QUESTION(
+	qid INT PRIMARY KEY,
+    questionText VARCHAR(100),
+    questionOrder INT
+);
+
+CREATE TABLE REGISTRATION(
+    username VARCHAR(15) PRIMARY KEY,
+	pw VARCHAR(15),
+    p_name VARCHAR(20) NOT NULL,
+    is_patient bool NOT NULL,
+    gender enum("male","female") NOT NULL,
+    race VARCHAR(50),
+    age INT
+);
+
+CREATE TABLE PATIENT(
+	personalID VARCHAR(15) PRIMARY KEY,
+    notes VARCHAR(400),
+    
+    CONSTRAINT p_plays_game foreign key(personalID) references REGISTRATION(username)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE ANSWER(
+	aid INT,
+    qid INT,
+    patientID VARCHAR(15),
+    response VARCHAR(1500),
+    
+    PRIMARY KEY(aid, qid, patientID),
+    
+    CONSTRAINT a_requires_question FOREIGN KEY(qid) REFERENCES QUESTION(qid) 
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT a_patientID FOREIGN KEY(patientID) REFERENCES PATIENT(personalID)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+CREATE TABLE ANSWERS(
+	aid INT,
+    patientID VARCHAR(15),
+    qid INT,
+    PRIMARY KEY(aid, patientID, qid),
+    
+    CONSTRAINT answers_answer FOREIGN KEY (aid) REFERENCES ANSWER(aid)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT answers_patient FOREIGN KEY (patientID) REFERENCES PATIENT(personalID)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT answers_question FOREIGN KEY (qid) REFERENCES QUESTION(qid)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE THERAPIST(
+	tid VARCHAR(15) PRIMARY KEY,
+    numPatients INT,
+    
+    CONSTRAINT therapist_personalinfo FOREIGN KEY(tid) REFERENCES REGISTRATION(username)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE REVIEWS(
+	aid INT,
+    patientID VARCHAR(15),
+    qid INT,
+    therapistID VARCHAR(15),
+    
+    CONSTRAINT reviews_answer FOREIGN KEY (aid) REFERENCES ANSWER(aid)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT reviews_patient FOREIGN KEY (patientID) REFERENCES PATIENT(personalID)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT reviews_question FOREIGN KEY (qid) REFERENCES QUESTION(qid)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT reviews_therapist FOREIGN KEY (therapistID) REFERENCES THERAPIST(tid)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    
+    PRIMARY KEY(aid, patientID, qid, therapistID)
+);
+
+CREATE TABLE GAME(
+	gid INT,
+    patientPlayed VARCHAR(15),
+    color VARCHAR(15),
+    score INT,
+    round INT,
+    time_limit INT,
+    
+    PRIMARY KEY(gid, patientPlayed),
+    CONSTRAINT game_played_by FOREIGN KEY (patientPlayed) REFERENCES PATIENT(personalID)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE ANALYSES(
+	tid VARCHAR(15),
+	personalID VARCHAR(15),
+    
+    PRIMARY KEY(tid, personalID),
+    
+    CONSTRAINT analyses_therapist FOREIGN KEY (tid) REFERENCES THERAPIST(tid)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT analyses_patient FOREIGN KEY (personalID) REFERENCES PATIENT(personalID)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE DESIGNS(
+	tid VARCHAR(15),
+	qid INT,
+    
+    PRIMARY KEY(tid, qid),
+    
+    CONSTRAINT designs_therapist FOREIGN KEY (tid) REFERENCES THERAPIST(tid)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT designs_patient FOREIGN KEY (qid) REFERENCES QUESTION(qid)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE CONTAINS(
+	gid INT,
+    qid INT,
+    
+    PRIMARY KEY(gid, qid),
+    
+    CONSTRAINT contains_gid FOREIGN KEY (gid) REFERENCES GAME(gid)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT contains_qid FOREIGN KEY (qid) REFERENCES QUESTION(qid)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
